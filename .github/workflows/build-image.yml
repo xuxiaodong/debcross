@@ -1,0 +1,44 @@
+# SPDX-FileCopyrightText: 2021 Xiaodong Xu <xuxiaodong@pm.me>
+#
+# SPDX-License-Identifier: MIT
+
+name: build
+on:
+  schedule:
+    - cron: '30 23 * * *'
+  push:
+    branches:
+      - 'master'
+    paths-ignore:
+      - '*.md'
+  workflow_dispatch:
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - amd64
+          - i386
+          - arm64
+          - armel
+          - armhf
+          - mips
+          - mipsel
+          - mips64el
+          - powerpc
+          - ppc64el
+          - s390x
+    name: ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    env:
+      USER: ${{ secrets.DOCKER_ID }}
+      PASS: ${{ secrets.DOCKER_PW }}
+      TARGET: ${{ matrix.target }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Login to Docker Hub
+        run: docker login -u "$USER" -p "$PASS"
+      - name: Build and push image
+        run: USER=$USER make ARCH="$TARGET"
